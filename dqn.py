@@ -142,9 +142,9 @@ class DQN(RLAgent):
         for state_tensor in non_final_next_states:
             state_tuple = self.tensor_to_state(state_tensor)
             op_open_actions = self.env.possible_actions(state=state_tuple)
-            op_open_mask = torch.tensor([op_open_actions], dtype=torch.long)
+            op_open_mask = torch.tensor([op_open_actions], dtype=torch.long, device=self.device)
 
-            op_open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float)
+            op_open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float, device=self.device)
             op_open_vals[0][op_open_mask] = self.target_net(state_tensor.unsqueeze(0))[0][op_open_mask]
 
             op_action_tensor = op_open_vals.max(1)
@@ -166,10 +166,11 @@ class DQN(RLAgent):
 
             temp_state = state_tuple[:op_action] + player + state_tuple[op_action+1:]
             temp_state_tensor = self.state_to_tensor(temp_state)
+            temp_state_tensor = temp_state_tensor.to(self.device)
             open_actions = self.env.possible_actions(state=temp_state)
-            open_mask = torch.tensor([open_actions], dtype=torch.long)
+            open_mask = torch.tensor([open_actions], dtype=torch.long, device=self.device)
 
-            open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float)
+            open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float, device=self.device)
             open_vals[0][open_mask] = self.target_net(temp_state_tensor)[0][open_mask]
 
             action_tensor = open_vals.max(1)
@@ -186,7 +187,7 @@ class DQN(RLAgent):
             q_val = -op_value + value
             vals.append(q_val)
         
-        return torch.tensor(vals, dtype=torch.float)        
+        return torch.tensor(vals, dtype=torch.float, device=self.device)        
 
     def sample(self):
         transitions = self.memory.sample(self.batch_size)
