@@ -123,7 +123,7 @@ class DQN(RLAgent):
     def push(self, *args):
         state = self.state_to_tensor(args[0])
         action = torch.tensor([[args[1]]])
-        reward = torch.tensor([args[2]], dtype=torch.float)
+        reward = torch.tensor([args[2]], dtype=torch.float, device=self.device)
         done = torch.tensor([args[4]])
 
         if not done:
