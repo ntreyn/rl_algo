@@ -2,6 +2,8 @@ from gym import spaces
 import numpy as np
 import random
 
+from collections import Counter
+
 class ttt_env:
 
     def __init__(self):
@@ -151,3 +153,12 @@ class ttt_env:
 
     def get_state(self):
         return tuple(self.board)
+    
+    def get_next_player(self, state):
+        state_list = list(state)
+        counts = Counter(state_list)
+        
+        if counts['X'] == counts['O']:
+            return 'X'
+        else:
+            return 'O'

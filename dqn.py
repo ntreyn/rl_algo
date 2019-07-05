@@ -96,7 +96,17 @@ class DQN(RLAgent):
         state_q_vals = self.policy_net(state_batch).gather(1, action_batch)
 
         next_state_vals = torch.zeros(self.batch_size, device=self.device)
-        next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+        
+        # print(non_final_mask)
+        # print(non_final_next_states)
+        # print(self.target_net(non_final_next_states).max(1))
+        # print(self.target_net(non_final_next_states).max(1)[0])
+        # print(self.target_net(non_final_next_states).max(1)[0].detach())
+        # print('\n')
+        
+        next_state_vals[non_final_mask] = self.max_opp_max_resp(non_final_next_states)
+
+        # next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
 
         expected_state_q_values = (next_state_vals * self.gamma) + reward_batch
 
@@ -123,6 +133,61 @@ class DQN(RLAgent):
 
         self.memory.push(state, action, reward, next_state, done)
 
+    def max_opp_max_resp(self, non_final_next_states):
+        """
+        For now, not checking if either action is legal
+        """
+        vals = []
+
+        for state_tensor in non_final_next_states:
+            state_tuple = self.tensor_to_state(state_tensor)
+            op_open_actions = self.env.possible_actions(state=state_tuple)
+            op_open_mask = torch.tensor([op_open_actions], dtype=torch.long)
+
+            op_open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float)
+            op_open_vals[0][op_open_mask] = self.target_net(state_tensor.unsqueeze(0))[0][op_open_mask]
+
+            op_action_tensor = op_open_vals.max(1)
+            op_action = op_action_tensor[1].detach().item()
+            op_value = op_action_tensor[0].detach().item()
+
+            if op_action not in op_open_actions:
+                import pdb; pdb.set_trace()
+                print("INVALID OP ACTION")
+                print(self.target_net(state_tensor.unsqueeze(0)))
+                print(op_action)
+                print(op_open_actions)
+            
+            if len(op_open_actions) == 1:
+                vals.append(-op_value)
+                continue
+
+            player = tuple(self.env.get_next_player(state_tuple))
+
+            temp_state = state_tuple[:op_action] + player + state_tuple[op_action+1:]
+            temp_state_tensor = self.state_to_tensor(temp_state)
+            open_actions = self.env.possible_actions(state=temp_state)
+            open_mask = torch.tensor([open_actions], dtype=torch.long)
+
+            open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float)
+            open_vals[0][open_mask] = self.target_net(temp_state_tensor)[0][open_mask]
+
+            action_tensor = open_vals.max(1)
+            action = action_tensor[1].detach().item()
+            value = action_tensor[0].detach().item()
+
+            if action not in open_actions:
+                import pdb; pdb.set_trace()
+                print("INVALID ACTION")
+                print(self.target_net(temp_state_tensor))
+                print(action)
+                print(open_actions)
+
+            q_val = -op_value + value
+            vals.append(q_val)
+        
+        return torch.tensor(vals, dtype=torch.float)        
+
     def sample(self):
         transitions = self.memory.sample(self.batch_size)
         batch = Transition(*list(zip(*transitions)))
@@ -141,3 +206,13 @@ class DQN(RLAgent):
 
         state_tensor = torch.tensor([state_list], dtype=torch.float)
         return state_tensor
+    
+    def tensor_to_state(self, tensor):
+        state_list = tensor.tolist()
+        num_to_tile = {
+            0: ' ',
+            1: 'X',
+            -1: 'O'
+        }
+        state = tuple([num_to_tile[num] for num in state_list])
+        return state
