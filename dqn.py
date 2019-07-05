@@ -91,6 +91,7 @@ class DQN(RLAgent):
         non_final_next_states = non_final_next_states.to(self.device)
 
         action_batch = torch.cat(batch.action)
+        action_batch = action_batch.to(self.device)
         reward_batch = torch.cat(batch.reward)
 
         state_q_vals = self.policy_net(state_batch).gather(1, action_batch)
