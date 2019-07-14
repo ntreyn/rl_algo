@@ -97,12 +97,10 @@ class DQN(RLAgent):
                                         device=self.device, dtype=torch.uint8)
         non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
 
-        print(non_final_next_states.is_cuda)
-
         state_batch = torch.cat(batch.state)
 
         state_batch = state_batch.to(self.device)
-        non_final_next_states = non_final_next_states.to(self.device)
+        #non_final_next_states = non_final_next_states.to(self.device)
 
         action_batch = torch.cat(batch.action)
         action_batch = action_batch.to(self.device)
@@ -117,7 +115,7 @@ class DQN(RLAgent):
         # Calc maximum opponent action
         closed_mask = torch.tensor([[t != 0 for t in s] for s in non_final_next_states], device=self.device, dtype=torch.uint8)
 
-        target_out = self.target_net(non_final_next_states)
+        target_out = self.target_net(non_final_next_states.to(self.device))
         target_out[closed_mask] = -float("Inf")
         next_state_vals[non_final_mask] = target_out.max(1)[0].detach()
         
@@ -138,7 +136,7 @@ class DQN(RLAgent):
         # Calc maximum response action
         resp_closed_mask = torch.tensor([[t != 0 for t in s] for s in non_final_resp_states], device=self.device, dtype=torch.uint8)
         
-        resp_target_out = self.target_net(non_final_resp_states)
+        resp_target_out = self.target_net(non_final_resp_states.to(self.device))
         resp_target_out[resp_closed_mask] = -float('Inf')
         resp_vals[non_final_resp_mask] = resp_target_out.max(1)[0].detach()
 
