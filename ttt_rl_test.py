@@ -7,6 +7,7 @@ from parameters import core_argparser, extra_params
 
 import numpy as np
 import argparse
+import os
 
 class human_agent:
     def __init__(self):
@@ -51,66 +52,35 @@ def eval_agent(agent1, agent2, env, render, eval_iter=10):
 
     return results
 
-def play(X, O, env, render, episode=0):
+def play(X, O, env, render):
     max_steps = 10
 
-    X_state = env.reset()
+    turn_map = {
+        'X': X,
+        'O': O
+    }
+
+    state = env.reset()
     done = False
-    first = True
     status = 'D'
 
     if render:
         env.render()
 
     for step in range(max_steps):
-
-        # X turn
-        X_action = X.act(X_state)
-        X_next_state, X_reward, done = env.step(X_action)
-
-        if render:
-            env.render()
-
-        # If X ends game
-        if done:
-            if X.training:
-                X.push(X_state, X_action, X_reward, X_next_state, done)
-                X.learn(episode)
-            if X_reward >= 1000:
-                status = 'X'
-            break
-                
-        # O learns
-        if not first and O.training:
-            O.push(O_state, O_action, O_reward, X_next_state, done)
-            O.learn(episode)
-        else:
-            first = False
-
-        O_state = X_next_state
-
-        # O turn
-        O_action = O.act(O_state)
-        O_next_state, O_reward, done = env.step(O_action)
+        turn = env.player
+        action = turn_map[turn].act(state)
+        next_state, reward, done = env.step(action)
 
         if render:
             env.render()
 
-        # If O ends game
         if done:
-            if O.training:
-                O.push(O_state, O_action, O_reward, O_next_state, done)
-                O.learn(episode)
-            if O_reward >= 1000:
-                status = 'O'
-            break
+            if reward >= 1000:
+                status = env.player
+                break
 
-        # X learns
-        if X.training:
-            X.push(X_state, X_action, X_reward, O_next_state, done)
-            X.learn(episode)
-
-        X_state = O_next_state
+        state = next_state
     
     return status
 
@@ -201,6 +171,7 @@ def train_q(env, args):
             state = next_state
             if done:
                 break
+    print()
     
     return agent
 
@@ -210,6 +181,10 @@ def train_dqn(env, args):
     max_steps = 10
 
     agent = DQN(env, args)
+
+    if args.load_ckpt:
+        agent.load(args.ckpt_path, args.load_ckpt)
+
     agent.train()
 
     for episode in range(total_episodes):
@@ -229,6 +204,12 @@ def train_dqn(env, args):
 
             if done:
                 break
+    print()
+    
+    if args.save_ckpt:
+        if not os.path.exists(args.ckpt_path):
+            os.mkdir(args.ckpt_path)
+        agent.save(args.ckpt_path, args.save_file)
 
     return agent
 
@@ -238,6 +219,7 @@ def main(args):
     env = ttt_env()
     dqn_agent = train_dqn(env, args)
     # mc_agent = train_mc_on(env, args)
+    args.episodes = 300000
     q_agent = train_q(env, args)
     
 
@@ -247,8 +229,10 @@ def main(args):
     print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
     
     #results = eval_agent(mc_agent, q_agent, env, render, eval_iter=5)
-    # results = eval_agent(mc_agent, human, env, render, eval_iter=5)
+    #results = eval_agent(q_agent, human, env, render, eval_iter=5)
     results = eval_agent(dqn_agent, human, env, render, eval_iter=5)
+    #print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
+    
                 
 if __name__ == "__main__":
     ARGPARSER = argparse.ArgumentParser(parents=[core_argparser()])

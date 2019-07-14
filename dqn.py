@@ -33,7 +33,6 @@ class DQN(RLAgent):
         self.max_epsilon = 1.0
         self.min_epsilon = 0.1
         self.decay_rate = 1000
-        self.var_epsilon = True
 
         dqn_net = NeuralNet(self.input_size, self.hidden_size, self.output_size)
         self.policy_net = dqn_net.to(self.device)
@@ -198,3 +197,21 @@ class DQN(RLAgent):
         }
         state = tuple([num_to_tile[num] for num in state_list])
         return state
+
+    def save(self, path, file):
+        torch.save({
+            'episode': self.episode,
+            'step': self.cur_step,
+            'policy_state_dict': self.policy_net.state_dict(),
+            'target_state_dict': self.target_net.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict()
+        }, '{}/ckpt_{}.pth'.format(path, file))
+
+    def load(self, path, file):
+        checkpoint = torch.load('{}/{}.pth'.format(path, file),
+                                map_location=lambda storage, loc: storage)
+        self.episode = checkpoint['episode']
+        self.cur_step = checkpoint['step']
+        self.policy_net.load_state_dict(checkpoint['policy_state_dict'])
+        self.target_net.load_state_dict(checkpoint['target_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

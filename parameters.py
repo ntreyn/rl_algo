@@ -48,6 +48,29 @@ def core_argparser():
         type=str,
         help='cpu or cuda (default: cpu)'
     )
+    argparser.add_argument(
+        '--var_epsilon',
+        action='store_true'
+    )
+    argparser.add_argument(
+        '--save_ckpt',
+        action='store_true'
+    )
+    argparser.add_argument(
+        '--ckpt_path',
+        default='checkpoints',
+        type=str
+    )
+    argparser.add_argument(
+        '--load_ckpt',
+        default='',
+        type=str
+    )
+    argparser.add_argument(
+        '--info',
+        type=str,
+        default=''
+    )
     return argparser
 
 
@@ -56,4 +79,11 @@ def extra_params(params):
     params.agent.gamma = params.gamma
     params.agent.alpha = params.alpha
     params.agent.epsilon = params.epsilon
+    params.agent.var_epsilon = params.var_epsilon
+
+    if params.save_ckpt:
+        params.save_file = 'checkpoint_e_{}_g_{}_episodes_{}'.format(params.epsilon, params.gamma, params.episodes)
+        if params.info:
+            params.save_file += '_{}'.format(params.info)
+
     return params
