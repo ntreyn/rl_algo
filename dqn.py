@@ -105,9 +105,9 @@ class DQN(RLAgent):
         # print(self.target_net(non_final_next_states).max(1)[0].detach())
         # print('\n')
         
-        next_state_vals[non_final_mask] = self.max_opp_max_resp(non_final_next_states)
+        # next_state_vals[non_final_mask] = self.max_opp_max_resp(non_final_next_states)
 
-        # next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+        next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
 
         expected_state_q_values = (next_state_vals * self.gamma) + reward_batch
 
