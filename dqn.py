@@ -32,7 +32,7 @@ class DQN(RLAgent):
         self.episode = 0
         self.max_epsilon = 1.0
         self.min_epsilon = 0.1
-        self.decay_rate = 100000
+        self.decay_rate = 10000
 
         dqn_net = NeuralNet(self.input_size, self.hidden_size, self.output_size)
         self.policy_net = dqn_net.to(self.device)
