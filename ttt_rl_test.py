@@ -207,7 +207,6 @@ def train_q(env, args):
 def train_dqn(env, args):
     
     total_episodes = args.episodes
-    total_episodes = 10000
     max_steps = 10
 
     agent = DQN(env, args)
