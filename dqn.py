@@ -123,7 +123,7 @@ class DQN(RLAgent):
         actions = target_out.max(1)[1].detach()
         
         j = torch.arange(non_final_next_states.size(0)).long()
-        new_tiles = torch.tensor([1 if s.sum().item() == 0 else -1 for s in non_final_next_states], device=self.device, dtype=torch.float)
+        new_tiles = torch.tensor([1 if s.sum().item() == 0 else -1 for s in non_final_next_states], dtype=torch.float)
         
         resp_states = non_final_next_states.clone()
         resp_states[j, actions] = new_tiles
