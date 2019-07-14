@@ -219,7 +219,6 @@ def main(args):
     env = ttt_env()
     dqn_agent = train_dqn(env, args)
     # mc_agent = train_mc_on(env, args)
-    args.episodes = 300000
     q_agent = train_q(env, args)
     
 
