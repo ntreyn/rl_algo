@@ -61,11 +61,23 @@ class DQN(RLAgent):
                 policy_out = self.policy_net(state.to(self.device))
             self.policy_net.train()
 
+            closed_actions = self.env.impossible_actions()
+            if closed_actions:
+                closed_mask = torch.tensor([closed_actions], device=self.device, dtype=torch.long)
+                policy_out[0][closed_mask] = torch.tensor(np.array([[-float('Inf')] * len(closed_mask)]),
+                                                        device=self.device, dtype=torch.float)[0]
+            action = policy_out.max(1)[1].view(1, 1).item()  
+
+            if action in closed_actions:
+                import pdb; pdb.set_trace()                  
+
+            """
             open_actions = self.env.possible_actions()
             open_policy = np.array([-float('Inf')] * self.env.action_size)
             open_policy[open_actions] = np.array(policy_out.flatten().tolist())[open_actions]
             max_actions = np.argwhere(open_policy == np.max(open_policy)).flatten()
             action = np.random.choice(max_actions)
+            """
             # action = policy_out.max(1)[1].view(1, 1).item()
 
         return action
@@ -98,18 +110,64 @@ class DQN(RLAgent):
 
         next_state_vals = torch.zeros(self.batch_size, device=self.device)
         
-        # print(non_final_mask)
-        # print(non_final_next_states)
-        # print(self.target_net(non_final_next_states).max(1))
-        # print(self.target_net(non_final_next_states).max(1)[0])
-        # print(self.target_net(non_final_next_states).max(1)[0].detach())
-        # print('\n')
         
-        # next_state_vals[non_final_mask] = self.max_opp_max_resp(non_final_next_states)
 
-        next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+        # Calc maximum opponent action
+        closed_list = []
+        for s in non_final_next_states:
+            closed_list.append([t.item() != 0 for t in s])
+        closed_mask = torch.tensor(closed_list, device=self.device, dtype=torch.uint8)
+        
+        target_out = self.target_net(non_final_next_states)
+        target_out[closed_mask] = -float("Inf")
+        next_state_vals[non_final_mask] = target_out.max(1)[0].detach()
+        
+        # Create resulting states
+        actions = target_out.max(1)[1].detach()
+        
+        j = torch.arange(non_final_next_states.size(0)).long()
+        new_tiles = torch.tensor([1 if sum(s).item() == 0 else -1 for s in non_final_next_states], device=self.device, dtype=torch.float)
+        
+        resp_states = non_final_next_states.clone()
+        resp_states[j, actions] = new_tiles
 
-        expected_state_q_values = (next_state_vals * self.gamma) + reward_batch
+        resp_mask_list = []
+        for s in batch.next_state:
+            if s is not None and (s == 0).sum() > 1:
+                resp_mask_list.append(True)
+            else:
+                resp_mask_list.append(False)
+
+        non_final_resp_mask = torch.tensor(resp_mask_list, device=self.device, dtype=torch.uint8)
+
+        non_final_resp_states = torch.stack([s for s in resp_states if 0 in s])
+
+        #non_final_resp_mask = non_final_mask.clone()
+
+        #non_final_resp_mask = torch.tensor([(s is not None and s in non_final_resp_states) for s in batch.next_state],
+        #                                        dtype=torch.uint8, device=self.device)
+
+        resp_vals = torch.zeros(self.batch_size, device=self.device)
+        
+        # Calc maximum response action
+        resp_closed_list = []
+        for s in non_final_resp_states:
+            resp_closed_list.append([t.item() != 0 for t in s])
+        resp_closed_mask = torch.tensor(resp_closed_list, device=self.device, dtype=torch.uint8)
+
+        resp_target_out = self.target_net(non_final_resp_states)
+        resp_target_out[resp_closed_mask] = -float('Inf')
+
+        resp_vals[non_final_resp_mask] = resp_target_out.max(1)[0].detach()
+
+        # print(resp_vals)
+
+        expected_state_q_values = ((-next_state_vals + resp_vals) * self.gamma) + reward_batch
+
+
+        # next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+
+        # expected_state_q_values = (next_state_vals * self.gamma) + reward_batch
 
         loss = F.mse_loss(state_q_vals, expected_state_q_values.unsqueeze(1))
 
@@ -145,7 +203,7 @@ class DQN(RLAgent):
             op_open_actions = self.env.possible_actions(state=state_tuple)
             op_open_mask = torch.tensor([op_open_actions], dtype=torch.long, device=self.device)
 
-            op_open_vals = torch.tensor([[-10000] * self.env.action_size], dtype=torch.float, device=self.device)
+            op_open_vals = torch.tensor([[-float('Inf')] * self.env.action_size], dtype=torch.float, device=self.device)
             op_open_vals[0][op_open_mask] = self.target_net(state_tensor.unsqueeze(0))[0][op_open_mask]
 
             op_action_tensor = op_open_vals.max(1)

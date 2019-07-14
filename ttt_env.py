@@ -148,6 +148,11 @@ class ttt_env:
             state = self.board
         return [i for i, s in enumerate(state) if s == ' ']
 
+    def impossible_actions(self, state=None):
+        if state is None:
+            state = self.board
+        return [i for i, s in enumerate(state) if s != ' ']
+
     def sample_action(self):
         return random.choice(self.possible_actions())
 
