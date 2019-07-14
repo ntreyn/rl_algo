@@ -97,6 +97,8 @@ class DQN(RLAgent):
                                         device=self.device, dtype=torch.uint8)
         non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
 
+        print(non_final_next_states.is_cuda)
+
         state_batch = torch.cat(batch.state)
 
         state_batch = state_batch.to(self.device)
