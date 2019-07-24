@@ -78,7 +78,7 @@ def play(X, O, env, render):
         if done:
             if reward >= 1000:
                 status = env.player
-                break
+            break
 
         state = next_state
     
@@ -115,6 +115,7 @@ def train_mc_on(env, args):
 
             state = next_state
             if done:
+                """
                 if reward >= 1000:
                     if player == 'X':
                         s, a, r, n, d = O_mem.pop(-1)
@@ -131,6 +132,7 @@ def train_mc_on(env, args):
                     s, a, r, n, d = X_mem.pop(-1)
                     r += 500
                     X_mem.append((s, a, r, n, d))
+                """
                 
                 for mem in X_mem:
                     agent.push(*mem)
@@ -216,21 +218,25 @@ def train_dqn(env, args):
 def main(args):
     render = args.render
     
-    env = ttt_env()
-    dqn_agent = train_dqn(env, args)
-    # mc_agent = train_mc_on(env, args)
-    q_agent = train_q(env, args)
-    
+    env_im = ttt_env()
+    # env_no_im = ttt_env(im_reward=True)
 
+    q_agent_im = train_q(env_im, args)
+    # q_agent_no_im = train_q(env_no_im, args)
+
+    # q_agent_no_im.env = env_im
+
+    # mc_agent = train_mc_on(env_im, args)
+
+    dqn_agent_im = train_dqn(env_im, args)
+    
     human = human_agent()
 
-    results = eval_agent(dqn_agent, q_agent, env, False, eval_iter=10000)
+    results = eval_agent(q_agent_im, dqn_agent, env_im, False, eval_iter=10000)
     print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
-    
-    #results = eval_agent(mc_agent, q_agent, env, render, eval_iter=5)
-    #results = eval_agent(q_agent, human, env, render, eval_iter=5)
-    results = eval_agent(dqn_agent, human, env, render, eval_iter=5)
-    #print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
+
+    results = eval_agent(q_agent_im, human, env_im, render, eval_iter=3)
+    results = eval_agent(dqn_agent, human, env_im, render, eval_iter=3)
     
                 
 if __name__ == "__main__":

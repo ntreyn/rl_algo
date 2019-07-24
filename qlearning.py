@@ -39,7 +39,7 @@ class QLearning(RLAgent):
             state_q = np.array([-float('Inf')] * self.env.action_size)
             state_q[open_actions] = self.Q[state][open_actions]
             max_actions = np.argwhere(state_q == np.max(state_q)).flatten()
-            
+
             """
             general action selection
             """

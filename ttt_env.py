@@ -6,7 +6,7 @@ from collections import Counter
 
 class ttt_env:
 
-    def __init__(self):
+    def __init__(self, im_reward=True):
         self.num_tiles = 9
         self.action_size = 9
         self.state_size = 19683 # * 2 # 3^9 * 2
@@ -15,6 +15,7 @@ class ttt_env:
             however, for now, the computation for determining states is simpler
         """
         self.streaks = [ [1,2,3], [1,4,7], [1,5,9], [2,5,8], [3,6,9], [3,5,7], [4,5,6], [7,8,9] ]
+        self.intermediate_reward = im_reward
         self.reset()
 
     def reset(self):
@@ -40,14 +41,17 @@ class ttt_env:
         if reward >= 1000:
             self.done = True
             new_state = None
-            # reward = 10
+            if not self.intermediate_reward:
+                reward = 1
         elif self.board_full():
             self.done = True
             new_state = None
-            # reward = 0.2
+            if not self.intermediate_reward:
+                reward = 0.5
         else:
             self.change_turn()
-            # reward = 0
+            if not self.impossible_actions:
+                reward = 0
 
         return new_state, reward, self.done
 
@@ -88,7 +92,6 @@ class ttt_env:
                         # If friendly streak
                         # Create streak of 3
                         # +1000
-                        # reward += 1
                         reward += 1000
                     elif sums[player] == 1:
                         # Else if mixed streak
