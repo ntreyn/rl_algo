@@ -232,11 +232,11 @@ def main(args):
     
     human = human_agent()
 
-    results = eval_agent(q_agent_im, dqn_agent, env_im, False, eval_iter=10000)
+    results = eval_agent(q_agent_im, dqn_agent_im, env_im, False, eval_iter=10000)
     print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
 
     results = eval_agent(q_agent_im, human, env_im, render, eval_iter=3)
-    results = eval_agent(dqn_agent, human, env_im, render, eval_iter=3)
+    results = eval_agent(dqn_agent_im, human, env_im, render, eval_iter=3)
     
                 
 if __name__ == "__main__":
