@@ -99,12 +99,15 @@ class new_DQN(RLAgent):
         state_q_vals = self.policy_net(state_batch).gather(1, action_batch)
 
         next_state_vals = torch.zeros(self.batch_size, device=self.device)
-
+        next_state_vals[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+        
+        """
         closed_mask = torch.tensor([[t != 0 for t in s] for s in non_final_next_states], device=self.device, dtype=torch.uint8)
 
         target_out = self.target_net(non_final_next_states.to(self.device))
         target_out[closed_mask] = -float("Inf")
         next_state_vals[non_final_mask] = target_out.max(1)[0].detach()
+        """
 
         expected_state_q_values = (-next_state_vals * self.gamma) + reward_batch
 
