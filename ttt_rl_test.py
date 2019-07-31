@@ -1,4 +1,5 @@
 from qlearning import QLearning
+from new_q import new_q
 from mc_on_policy import MCOnPolicy
 from dqn import DQN
 
@@ -9,9 +10,12 @@ import numpy as np
 import argparse
 import os
 
+from collections import defaultdict
+
 class human_agent:
     def __init__(self):
         self.training = False
+        self.Q = defaultdict(lambda: np.zeros(9))
 
     def act(self, state):
         move = int(input("Choose move: "))
@@ -34,6 +38,9 @@ def eval_agent(agent1, agent2, env, render, eval_iter=10):
 
         rand = np.random.randint(0, 2)
         if rand == 0:
+            if render:
+                print("X: agent1")
+                print("O: agent2")
             status = play(agent1, agent2, env, render)
             if status == 'X':
                 results["a1"] += 1
@@ -42,6 +49,9 @@ def eval_agent(agent1, agent2, env, render, eval_iter=10):
             else:
                 results["draw"] += 1
         else:
+            if render:
+                print("X: agent2")
+                print("O: agent1")
             status = play(agent2, agent1, env, render)
             if status == 'X':
                 results["a2"] += 1
@@ -73,6 +83,7 @@ def play(X, O, env, render):
         next_state, reward, done = env.step(action)
 
         if render:
+            print(turn_map[turn].Q[state])
             env.render()
 
         if done:
@@ -115,7 +126,7 @@ def train_mc_on(env, args):
 
             state = next_state
             if done:
-                """
+                
                 if reward >= 1000:
                     if player == 'X':
                         s, a, r, n, d = O_mem.pop(-1)
@@ -132,7 +143,7 @@ def train_mc_on(env, args):
                     s, a, r, n, d = X_mem.pop(-1)
                     r += 500
                     X_mem.append((s, a, r, n, d))
-                """
+                
                 
                 for mem in X_mem:
                     agent.push(*mem)
@@ -154,6 +165,34 @@ def train_q(env, args):
     total_episodes = args.episodes
 
     agent = QLearning(env, args.agent)
+    agent.train()
+
+    for episode in range(total_episodes):
+        print(episode, agent.epsilon, end='\r')
+
+        max_steps = 10
+        state = env.reset()
+        done = False
+
+        for step in range(max_steps):
+            action = agent.act(state)
+            next_state, reward, done = env.step(action)
+
+            agent.push(state, action, reward, next_state, done)
+            agent.learn(episode)
+
+            state = next_state
+            if done:
+                break
+    print()
+    
+    return agent
+
+def train_new_q(env, args):
+
+    total_episodes = args.episodes
+
+    agent = new_q(env, args.agent)
     agent.train()
 
     for episode in range(total_episodes):
@@ -215,28 +254,41 @@ def train_dqn(env, args):
 
     return agent
 
+def test_agents(agent1, agent2, env, render, iterations=1):
+    results = eval_agent(agent1, agent2, env, render, eval_iter=iterations)
+    print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
+
 def main(args):
     render = args.render
     
-    env_im = ttt_env()
-    # env_no_im = ttt_env(im_reward=True)
+    env_im = ttt_env(im_reward=True)
+    env_no_im = ttt_env(im_reward=False)
 
-    q_agent_im = train_q(env_im, args)
-    # q_agent_no_im = train_q(env_no_im, args)
+    q_agent = train_q(env_im, args)
+    #q_agent = train_q(env_no_im, args)
+    #q_agent.env = env_im
 
-    # q_agent_no_im.env = env_im
+    new_q_agent = train_new_q(env_no_im, args)
+    new_q_agent.env = env_im
 
-    # mc_agent = train_mc_on(env_im, args)
+    mc_agent = train_mc_on(env_im, args)
 
-    dqn_agent_im = train_dqn(env_im, args)
+    # dqn_agent_im = train_dqn(env_im, args)
     
     human = human_agent()
 
-    results = eval_agent(q_agent_im, dqn_agent_im, env_im, False, eval_iter=10000)
-    print("Agent 1 wins: {}, Agent 2 wins: {}, Draws: {}".format(results["a1"], results["a2"], results["draw"]))
+    test_agents(mc_agent, new_q_agent, env_im, False, 10000)
+    test_agents(mc_agent, q_agent, env_im, False, 10000)
+    test_agents(q_agent, new_q_agent, env_im, False, 10000)
 
-    results = eval_agent(q_agent_im, human, env_im, render, eval_iter=3)
-    results = eval_agent(dqn_agent_im, human, env_im, render, eval_iter=3)
+    test_agents(mc_agent, new_q_agent, env_im, True, 10)
+    test_agents(mc_agent, q_agent, env_im, True, 10)
+    test_agents(q_agent, new_q_agent, env_im, True, 10)
+    """
+    test_agents(mc_agent, new_q_agent, env_im, render, 10)
+    test_agents(new_q_agent, human, env_im, render, 10)
+    test_agents(mc_agent, human, env_im, render, 3)
+    """
     
                 
 if __name__ == "__main__":

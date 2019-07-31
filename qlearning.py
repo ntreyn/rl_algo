@@ -46,29 +46,6 @@ class QLearning(RLAgent):
             # max_actions = np.argwhere(self.Q[state] == np.max(self.Q[state])).flatten()
             action = np.random.choice(max_actions)
         return action
-    
-    def min_op(self, state):
-        open_actions = self.env.possible_actions()
-        min_actions = np.array([])
-        max_q = float('Inf')
-
-        if len(open_actions) == 1:
-            return open_actions[0]
-
-        for a in open_actions:
-            temp_state = state[:a] + tuple(self.env.player) + state[a+1:]
-            temp_state_q = np.array([-float('Inf')] * self.env.action_size)
-            temp_actions = self.env.possible_actions(state=temp_state)
-            temp_state_q[temp_actions] = self.Q[temp_state][temp_actions]
-            temp_q = np.max(temp_state_q)
-
-            if temp_q < max_q:
-                max_q = temp_q
-                min_actions = np.array([a])
-            elif temp_q == max_q:
-                np.append(min_actions, a)
-
-        return min_actions
 
     def max_op_max_resp(self, state):
 
@@ -98,6 +75,9 @@ class QLearning(RLAgent):
             p_max_q = np.max(p_qs)
             if p_max_q > best_response_q_val:
                 best_response_q_val = p_max_q
+        
+        # best_response_q_val = 0
+        best_opponent_q_val = 0
         
         return -best_opponent_q_val + best_response_q_val
 

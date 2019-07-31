@@ -47,10 +47,10 @@ class ttt_env:
             self.done = True
             new_state = None
             if not self.intermediate_reward:
-                reward = 0.5
+                reward = 0
         else:
             self.change_turn()
-            if not self.impossible_actions:
+            if not self.intermediate_reward:
                 reward = 0
 
         return new_state, reward, self.done

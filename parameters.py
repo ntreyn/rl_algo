@@ -23,7 +23,7 @@ def core_argparser():
         '-a', '--alpha', 
         type=float, 
         default=0.7, 
-        help='step size (default: 0.7)'
+        help='step size (default: 0.1)'
     )
     argparser.add_argument(
         '-e', '--epsilon', 

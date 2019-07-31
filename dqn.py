@@ -146,14 +146,15 @@ class DQN(RLAgent):
 
         # expected_state_q_values = (next_state_vals * self.gamma) + reward_batch
 
-        loss = F.mse_loss(state_q_vals, expected_state_q_values.unsqueeze(1))
+        loss = F.cross_entropy(state_q_vals, expected_state_q_values.unsqueeze(1))
+        # loss = F.mse_loss(state_q_vals, expected_state_q_values.unsqueeze(1))
 
         self.optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.policy_net.parameters(), self.clip)
         self.optimizer.step()
 
-        if self.cur_step % 2 == 0:
+        if self.cur_step % 10 == 0:
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
     def push(self, *args):
