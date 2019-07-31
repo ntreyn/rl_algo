@@ -264,9 +264,9 @@ def main(args):
     env_im = ttt_env(im_reward=True)
     env_no_im = ttt_env(im_reward=False)
 
-    q_agent = train_q(env_im, args)
-    #q_agent = train_q(env_no_im, args)
-    #q_agent.env = env_im
+    #q_agent = train_q(env_im, args)
+    q_agent = train_q(env_no_im, args)
+    q_agent.env = env_im
 
     new_q_agent = train_new_q(env_no_im, args)
     new_q_agent.env = env_im
