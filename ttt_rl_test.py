@@ -2,6 +2,7 @@ from qlearning import QLearning
 from new_q import new_q
 from mc_on_policy import MCOnPolicy
 from dqn import DQN
+from new_dqn import new_DQN
 
 from ttt_env import ttt_env
 from parameters import core_argparser, extra_params
@@ -83,12 +84,13 @@ def play(X, O, env, render):
         next_state, reward, done = env.step(action)
 
         if render:
-            print(turn_map[turn].Q[state])
+            #print(turn_map[turn].Q[state])
             env.render()
 
         if done:
             if reward >= 1000:
                 status = env.player
+                env.render()
             break
 
         state = next_state
@@ -126,7 +128,7 @@ def train_mc_on(env, args):
 
             state = next_state
             if done:
-                
+                """
                 if reward >= 1000:
                     if player == 'X':
                         s, a, r, n, d = O_mem.pop(-1)
@@ -143,7 +145,26 @@ def train_mc_on(env, args):
                     s, a, r, n, d = X_mem.pop(-1)
                     r += 500
                     X_mem.append((s, a, r, n, d))
+                """
                 
+                if reward == 1:
+                    if player == 'X':
+                        s, a, r, n, d = O_mem.pop(-1)
+                        r = -1
+                        O_mem.append((s, a, r, n, d))
+                    else:
+                        s, a, r, n, d = X_mem.pop(-1)
+                        r = -1
+                        X_mem.append((s, a, r, n, d))
+                """
+                else:
+                    s, a, r, n, d = O_mem.pop(-1)
+                    r = 0.5 
+                    O_mem.append((s, a, r, n, d))
+                    s, a, r, n, d = X_mem.pop(-1)
+                    r = 0.5
+                    X_mem.append((s, a, r, n, d))
+                """
                 
                 for mem in X_mem:
                     agent.push(*mem)
@@ -221,7 +242,7 @@ def train_dqn(env, args):
     total_episodes = args.episodes
     max_steps = 10
 
-    agent = DQN(env, args)
+    agent = new_DQN(env, args)
 
     if args.load_ckpt:
         agent.load(args.ckpt_path, args.load_ckpt)
@@ -268,27 +289,35 @@ def main(args):
     q_agent = train_q(env_no_im, args)
     q_agent.env = env_im
 
-    new_q_agent = train_new_q(env_no_im, args)
-    new_q_agent.env = env_im
+    #new_q_agent = train_new_q(env_no_im, args)
+    #new_q_agent.env = env_im
 
-    mc_agent = train_mc_on(env_im, args)
+    #mc_agent = train_mc_on(env_no_im, args)
+    #mc_agent.env = env_im
 
-    # dqn_agent_im = train_dqn(env_im, args)
+    dqn_agent = train_dqn(env_no_im, args)
+    dqn_agent.env = env_im
     
     human = human_agent()
 
+    test_agents(q_agent, dqn_agent, env_im, False, 10000)
+    test_agents(dqn_agent, human, env_im, render, 5)
+
+
+    """
     test_agents(mc_agent, new_q_agent, env_im, False, 10000)
     test_agents(mc_agent, q_agent, env_im, False, 10000)
     test_agents(q_agent, new_q_agent, env_im, False, 10000)
-    """
+    
     test_agents(mc_agent, new_q_agent, env_im, True, 10)
     test_agents(mc_agent, q_agent, env_im, True, 10)
     test_agents(q_agent, new_q_agent, env_im, True, 10)
     
-    test_agents(mc_agent, new_q_agent, env_im, render, 10)
-    test_agents(new_q_agent, human, env_im, render, 10)
+    test_agents(q_agent, human, env_im, render, 5)
+    test_agents(new_q_agent, human, env_im, render, 5)
     test_agents(mc_agent, human, env_im, render, 3)
     """
+    
     
                 
 if __name__ == "__main__":
