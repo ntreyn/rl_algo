@@ -76,8 +76,8 @@ class QLearning(RLAgent):
             if p_max_q > best_response_q_val:
                 best_response_q_val = p_max_q
         
-        # best_response_q_val = 0
-        best_opponent_q_val = 0
+        best_response_q_val = 0
+        #best_opponent_q_val = 0
         
         return -best_opponent_q_val + best_response_q_val
 
