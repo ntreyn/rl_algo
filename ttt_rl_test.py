@@ -280,11 +280,11 @@ def main(args):
     test_agents(mc_agent, new_q_agent, env_im, False, 10000)
     test_agents(mc_agent, q_agent, env_im, False, 10000)
     test_agents(q_agent, new_q_agent, env_im, False, 10000)
-
+    """
     test_agents(mc_agent, new_q_agent, env_im, True, 10)
     test_agents(mc_agent, q_agent, env_im, True, 10)
     test_agents(q_agent, new_q_agent, env_im, True, 10)
-    """
+    
     test_agents(mc_agent, new_q_agent, env_im, render, 10)
     test_agents(new_q_agent, human, env_im, render, 10)
     test_agents(mc_agent, human, env_im, render, 3)
