@@ -16,14 +16,7 @@ class new_q(RLAgent):
         action_size = self.env.action_size
         self.Q = defaultdict(lambda: np.zeros(action_size))
 
-        self.epsilon = 1.0
-        self.max_epsilon = 1.0
-        self.min_epsilon = 0.1
-        self.decay_rate = 0.0001
-
         self.episode = 0
-        self.var_epsilon = True
-
         self.player = 'X'
 
     def act(self, state):

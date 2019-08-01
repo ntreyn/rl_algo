@@ -16,13 +16,13 @@ def core_argparser():
     argparser.add_argument(
         '-g', '--gamma', 
         type=float, 
-        default=0.9, 
+        default=0.99, 
         help='discount (default: 0.9)'
     )
     argparser.add_argument(
         '-a', '--alpha', 
         type=float, 
-        default=0.7, 
+        default=0.9, 
         help='step size (default: 0.1)'
     )
     argparser.add_argument(
@@ -30,6 +30,28 @@ def core_argparser():
         type=float, 
         default=0.1, 
         help='exploration chance (default: 1.0)'
+    )
+    argparser.add_argument(
+        '--var_epsilon',
+        action='store_true'
+    )
+    argparser.add_argument(
+        '--decay_rate', 
+        type=float, 
+        default=0.0001, 
+        help='epsilon decay rate (default: 0.0001)'
+    )
+    argparser.add_argument(
+        '--min_epsilon', 
+        type=float, 
+        default=0.1, 
+        help='epsilon lower bound (default: 0.1)'
+    )
+    argparser.add_argument(
+        '--max_epsilon', 
+        type=float, 
+        default=1.0, 
+        help='epsilon starting point (default: 1.0)'
     )
     argparser.add_argument(
         '-r', '--render', 
@@ -47,10 +69,6 @@ def core_argparser():
         default='cpu',
         type=str,
         help='cpu or cuda (default: cpu)'
-    )
-    argparser.add_argument(
-        '--var_epsilon',
-        action='store_true'
     )
     argparser.add_argument(
         '--save_ckpt',
@@ -80,6 +98,9 @@ def extra_params(params):
     params.agent.alpha = params.alpha
     params.agent.epsilon = params.epsilon
     params.agent.var_epsilon = params.var_epsilon
+    params.agent.min_epsilon = params.min_epsilon
+    params.agent.max_epsilon = params.max_epsilon
+    params.agent.decay_rate = params.decay_rate
 
     if params.save_ckpt:
         params.save_file = 'checkpoint_e_{}_g_{}_episodes_{}'.format(params.epsilon, params.gamma, params.episodes)

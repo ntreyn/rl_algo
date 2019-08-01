@@ -39,9 +39,6 @@ def eval_agent(agent1, agent2, env, render, eval_iter=10):
 
         rand = np.random.randint(0, 2)
         if rand == 0:
-            if render:
-                print("X: agent1")
-                print("O: agent2")
             status = play(agent1, agent2, env, render)
             if status == 'X':
                 results["a1"] += 1
@@ -50,9 +47,6 @@ def eval_agent(agent1, agent2, env, render, eval_iter=10):
             else:
                 results["draw"] += 1
         else:
-            if render:
-                print("X: agent2")
-                print("O: agent1")
             status = play(agent2, agent1, env, render)
             if status == 'X':
                 results["a2"] += 1
@@ -90,7 +84,7 @@ def play(X, O, env, render):
         if done:
             if reward >= 1000:
                 status = env.player
-                env.render()
+                #env.render()
             break
 
         state = next_state
@@ -288,13 +282,13 @@ def main(args):
     #q_agent = train_q(env_im, args)
     q_agent = train_q(env_no_im, args)
     q_agent.env = env_im
+    """
+    new_q_agent = train_new_q(env_no_im, args)
+    new_q_agent.env = env_im
 
-    #new_q_agent = train_new_q(env_no_im, args)
-    #new_q_agent.env = env_im
-
-    #mc_agent = train_mc_on(env_no_im, args)
-    #mc_agent.env = env_im
-
+    mc_agent = train_mc_on(env_no_im, args)
+    mc_agent.env = env_im
+    """
     dqn_agent = train_dqn(env_no_im, args)
     dqn_agent.env = env_im
     

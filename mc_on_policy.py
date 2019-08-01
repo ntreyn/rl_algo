@@ -16,10 +16,6 @@ class MCOnPolicy(RLAgent):
         action_size = self.env.action_size
         self.Q = defaultdict(lambda: np.zeros(action_size))
 
-        self.max_epsilon = 1.0
-        self.min_epsilon = self.epsilon
-        self.decay_rate = 0.0001
-        self.var_epsilon = True
         self.episode = 0
 
         self.memory = []
